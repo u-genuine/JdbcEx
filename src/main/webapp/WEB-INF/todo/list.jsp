@@ -24,5 +24,10 @@
         </li>
     </c:forEach>
 </ul>
+
+<form action="/logout" method="post">
+    <button>LOGOUT</button>
+</form>
+
 </body>
 </html>

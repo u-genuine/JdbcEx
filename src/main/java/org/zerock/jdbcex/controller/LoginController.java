@@ -1,6 +1,8 @@
 package org.zerock.jdbcex.controller;
 
 import lombok.extern.java.Log;
+import org.zerock.jdbcex.dto.MemberDTO;
+import org.zerock.jdbcex.service.MemberService;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -34,12 +36,16 @@ public class LoginController extends HttpServlet {
         String mid = req.getParameter("mid");
         String mpw = req.getParameter("mpw");
 
-        String str = mid+mpw;
+        try{
+            MemberDTO memberDTO = MemberService.INSTANCE.login(mid, mpw);
+            HttpSession session = req.getSession();
+            //정상적으로 로그인 된 경우 HttpSession을 이용해서 'loginInfo' 이름으로 객체를 저장
+            session.setAttribute("loginInfo", memberDTO);
+            resp.sendRedirect("/todo/list");
 
-        HttpSession session = req.getSession();
-
-        session.setAttribute("loginInfo", str);
-
-        resp.sendRedirect("/todo/list");
+        } catch (Exception e){
+            //예외 발생 시 '/login'으로 이동하는데 'result'라는 파라미터를 전달해서 문제가 발생했다는 사실 같이 전달
+            resp.sendRedirect("/login?result=error");
+        }
     }
 }

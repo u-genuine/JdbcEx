@@ -1,22 +1,20 @@
 package org.zerock.jdbcex.controller;
 
-import lombok.extern.java.Log;
+import lombok.extern.log4j.Log4j2;
 import org.zerock.jdbcex.dto.MemberDTO;
 import org.zerock.jdbcex.service.MemberService;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
+import javax.servlet.http.*;
 import java.io.IOException;
+import java.util.UUID;
 
 
 // '/login' 경로에서 GET 방식은 로그인 화면을 보여주고
 // POST 방식으로는 실제 로그인 처리
 @WebServlet(value = "/login")
-@Log
+@Log4j2
 public class LoginController extends HttpServlet {
 
     @Override
@@ -36,8 +34,28 @@ public class LoginController extends HttpServlet {
         String mid = req.getParameter("mid");
         String mpw = req.getParameter("mpw");
 
+        //'auto'라는 이름으로 체크박스에서 전송되는 값 확인
+        String auto = req.getParameter("auto");
+
+        boolean rememberMe = auto != null && auto.equals("on");
+
         try{
-            MemberDTO memberDTO = MemberService.INSTANCE.login(mid, mpw);
+            MemberDTO memberDTO = MemberService.INSTANCE.login(mid,mpw);
+
+            if(rememberMe){
+                String uuid = UUID.randomUUID().toString();
+
+                MemberService.INSTANCE.updateUuid(mid, uuid);
+                memberDTO.setUuid(uuid);
+
+                // 쿠키 생성 및 전송
+                Cookie rememberCookie = new Cookie("remember-me", uuid);
+                rememberCookie.setMaxAge(60*60*24*7);
+                rememberCookie.setPath("/");
+
+                resp.addCookie(rememberCookie);
+            }
+
             HttpSession session = req.getSession();
             //정상적으로 로그인 된 경우 HttpSession을 이용해서 'loginInfo' 이름으로 객체를 저장
             session.setAttribute("loginInfo", memberDTO);
